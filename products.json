@@ -1,18 +1,11 @@
-query ($cursor: String) {
-  products(first: 250, after: $cursor) {
-    edges {
-      node {
-        handle
-        title
-        vendor
-        tags
-        priceRange {
-          minVariantPrice { amount }
-        }
-        images(first:1){edges{node{url}}}
-      }
-      cursor
-    }
-    pageInfo { hasNextPage }
+
+[
+  {
+    "handle": "sample-product",
+    "title": "Sample Product",
+    "vendor": "Nike",
+    "tags": ["Shoes"],
+    "price": 2999,
+    "image": "https://via.placeholder.com/300"
   }
-}
+]
