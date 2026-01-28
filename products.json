@@ -1,0 +1,18 @@
+query ($cursor: String) {
+  products(first: 250, after: $cursor) {
+    edges {
+      node {
+        handle
+        title
+        vendor
+        tags
+        priceRange {
+          minVariantPrice { amount }
+        }
+        images(first:1){edges{node{url}}}
+      }
+      cursor
+    }
+    pageInfo { hasNextPage }
+  }
+}
