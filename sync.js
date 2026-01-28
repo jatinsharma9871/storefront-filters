@@ -5,10 +5,11 @@ const TOKEN = "acda1d5a1d41bc5b8d927f4efd56d9f3";
 const API_VERSION = "2025-04";
 
 let products = [];
-let cursor = null;
-let hasNextPage = true;
 
 async function fetchProducts() {
+  let cursor = null;
+  let hasNextPage = true;
+
   while (hasNextPage) {
     const query = `
       query ($cursor: String) {
@@ -59,13 +60,36 @@ async function fetchProducts() {
 
     const json = await res.json();
     
-    if (!json.data) {
-      console.error("❌ API Error:", json.errors || "Unknown error");
-      console.log("Please update SHOP and TOKEN in sync.js with valid Shopify credentials");
+    if (json.errors && Array.isArray(json.errors)) {
+      // Check if it's the pagination limit error
+      const hasLimitError = json.errors.some(e => 
+        e.message && e.message.includes('Platform limit for pagination')
+      );
+      
+      if (hasLimitError) {
+        console.log("✅ Reached Shopify pagination limit - all available products fetched");
+        hasNextPage = false;
+      } else {
+        console.error("❌ API Error:", json.errors);
+        console.log("Please update SHOP and TOKEN in sync.js with valid Shopify credentials");
+        process.exit(1);
+      }
+    } else if (json.errors) {
+      console.error("❌ API Error:", json.errors);
       process.exit(1);
     }
     
+    if (!json.data) {
+      hasNextPage = false;
+      continue;
+    }
+    
     const data = json.data.products;
+
+    if (data.edges.length === 0) {
+      hasNextPage = false;
+      continue;
+    }
 
     data.edges.forEach(edge => {
       products.push({
@@ -85,7 +109,7 @@ async function fetchProducts() {
   }
 
   fs.writeFileSync("products.json", JSON.stringify(products, null, 2));
-  console.log("✅ products.json created with REAL data");
+  console.log(`✅ products.json created with ${products.length} products`);
 }
 
 fetchProducts();
